@@ -1,60 +1,79 @@
 package com.bit2016.network.echo;
-
+  
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Scanner;
 
 public class EchoClient {
 	private static final String SERVER_IP = "192.168.1.5";
-	private static final int SERVER_PORT = 5000;
-
+	private static final int SERVER_PORT = 9000;
+	
 	public static void main(String[] args) {
-		Socket socket = null;
-		try {
-			// 1. socket 생성
-			socket = new Socket();			
-			
-			// 2. 서버연결
-			socket.connect(new InetSocketAddress(SERVER_IP, SERVER_PORT));			
+		// TODO Auto-generated method stub
 
-			// 3. IO Stream 받아오기
-			InputStream inputStream = socket.getInputStream();
-			OutputStream outputStream = socket.getOutputStream();
-	
-			while( true ){
-				// 4. 쓰기
-				Scanner scanner = new Scanner(System.in);
-				System.out.print(">>");
-				String str = scanner.nextLine();
-				outputStream.write(str.getBytes("UTF-8"));
-	
-				// 5. 읽기
-				byte[] buffer = new byte[256];
-				int readByteCount = inputStream.read( buffer );
-				if( readByteCount == -1 ){
-					System.out.println("[Client] closed by server");
-					return;
-				}
-				String data = new String(buffer, 0, readByteCount, "UTF-8");
-				if( data.equals("exit") ) {
+		Scanner scanner = null;
+		Socket socket = null;
+		
+		try{
+			//1. Scanner 생성(표준입력 연결)
+			scanner = new Scanner( System.in );
+			
+			//2. Socket 생성
+			socket = new Socket();
+			
+			//3. connect to server
+			socket.connect( new InetSocketAddress( SERVER_IP, SERVER_PORT ) );
+			
+			//4. IOStream 생성(받아오기)
+			BufferedReader br = new BufferedReader( new InputStreamReader( socket.getInputStream(), "UTF-8" ) );
+			PrintWriter pw = new PrintWriter( new OutputStreamWriter( socket.getOutputStream(), "UTF-8" ), true );
+			
+			while( true ) {
+				//5. 입력 받기
+				System.out.print( ">>" );
+				String line = scanner.nextLine();
+				if( "quit".equals( line ) ) {
 					break;
 				}
-				System.out.println("<<" + data);
+				
+				//6. 송신
+				pw.println( line );
+			
+				//7. 수신
+				String data = br.readLine();
+				if( data == null ) {
+					log( "closed by server" );
+					break;
+				}
+				
+				//8. 출력
+				System.out.println( "<<" + data );
 			}
-
-		} catch (IOException ex) {
-			ex.printStackTrace();
+		} catch( SocketException ex ){
+			log( "abnormal closed by client" );
+		} catch( IOException ex ) {
+			log( "error" + ex );
 		} finally {
 			try {
-				if (socket != null & socket.isClosed() == false) {
+				if( scanner != null ) {
+					scanner.close();
+				}
+				if( socket != null && socket.isClosed() == false ) {
 					socket.close();
 				}
-			} catch (IOException ex) {
+			} catch( IOException ex ) {
 				ex.printStackTrace();
 			}
 		}
+	}
+
+	private static void log( String message ) {
+		System.out.println( "[Echo Client]" + message );
 	}
 }
