@@ -21,6 +21,9 @@ public class ChatServer {
 			// 1. create server socket
 			serverSocket = new ServerSocket();
 			
+			// 1-1. set option SO_REUSEADDR ( 종료 후 빨리 binding 하기 위함. 필수 )
+			serverSocket.setReuseAddress(true);
+			
 			// 2. binding
 			String localhost = InetAddress.getLocalHost().getHostAddress();
 			serverSocket.bind( new InetSocketAddress(localhost, PORT), 5 ); // 5는 백로그 숫자 // 서버서 accept 하고 있을 때 connection 요청을 저장하는것. 백로그. 서버가 accpt 를 마치고 백로그에서 connection 요청을 불러와서 accept 시작
